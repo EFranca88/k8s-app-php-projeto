@@ -1,0 +1,25 @@
+# Utilizado para interargir com diferentes de pods de uma mesma aplicação
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-php-projeto-lb
+spec:
+  selector:
+    app: app-php-projeto
+  ports:
+    - port: 80
+      targetPort: 80
+  type: LoadBalancer
+
+---
+# Necessario para realizar a conexão entre o backend e a base de dados
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-projeto-connection
+spec:
+  ports:
+    - port: 3306
+  selector:
+    app: db-projeto
+  clusterIP: None

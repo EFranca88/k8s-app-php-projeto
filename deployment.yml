@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /meubanco/
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: local
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-projeto
+spec:
+  selector:
+    matchLabels:
+      app: db-projeto
+  template:
+    metadata:
+      labels:
+        app: db-projeto
+    spec:
+      containers:
+      - image: efrans88/db-projeto:1.0
+        args:
+        - "--ignore-db-dir=lost+found"
+        imagePullPolicy: Always
+        name: db-projeto
+        ports:
+        - containerPort: 3306
+          name: db-projeto
+       
+        volumeMounts:
+        - name: local
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: local
+        persistentVolumeClaim:
+          claimName: local
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-php-projeto-deployment
+  labels:
+    app: app-php-projeto
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: app-php-projeto
+  template:
+    metadata:
+      labels:
+        app: app-php-projeto
+    spec:
+      containers:
+      - name: app-php-projeto
+        image: efrans88/k8s-php-projeto:1.0
+        ports:
+        - containerPort: 80
